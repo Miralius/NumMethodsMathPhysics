@@ -2,12 +2,12 @@ import numpy as np  # подключение числ.вычислений
 import numba
 
 
-@numba.jit
+@numba.njit
 def gamma(t, time):
     return 1 - np.exp(-2 * t / time)
 
 
-@numba.jit
+@numba.njit
 def crank_nicholson_solve(x, t, alpha, c, d):
     i = len(x) - 1  # Инициализация всех констант и массивов
     k = len(t) - 1

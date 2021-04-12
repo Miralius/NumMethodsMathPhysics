@@ -1,19 +1,20 @@
 import os
 import matplotlib.pyplot as plt  # отрисовка графиков
 from crank_nicholson_scheme import *
+from numba import prange
 
 
 # noinspection SpellCheckingInspection
-@numba.jit
+@numba.njit
 def linspace(a, b, n):
     h = (b - a) / n
     return np.array([i * h for i in range(n + 1)])
 
 
-@numba.jit
+@numba.njit(cache=True, parallel=True)
 def get_analytical_solutions(x, t, alpha, c, d, time, length, number):
     solution = np.zeros((len(x), len(t)))
-    for k in range(len(t)):
+    for k in prange(len(t)):
         for i in range(len(x)):
             summa = 0
             n = 1
@@ -42,21 +43,22 @@ def analytical_solution(x, t, alpha, c, d, time, length, number):
     return solution
 
 
-@numba.jit
+@numba.njit
 def mean_norm_error(field1, field2):
     return np.mean(abs(field1 - field2))
 
 
-@numba.jit
+@numba.njit
 def uniform_norm_error(field1, field2):
     eps = 0
-    for j in range(len(field1)):
-        if max(abs(field1[j] - field2[j])) > eps:
-            eps = max(abs(field1[j] - field2[j]))
+    for i in range(len(field1)):
+        for j in range(len(field1[0])):
+            if max(abs(field1[i][j] - field2[i][j]), eps) > eps:
+                eps = abs(field1[i][j] - field2[i][j])
     return eps
 
 
-@numba.jit
+@numba.njit
 def root_mean_square_norm_error(field1, field2):
     eps = 0
     for i in range(len(field1)):
@@ -65,7 +67,6 @@ def root_mean_square_norm_error(field1, field2):
     return np.sqrt(eps / (len(field1) * len(field1[0])))
 
 
-@numba.jit
 def find_number(alpha, c, d, time, length):
     size = 100
     x = linspace(0, length, size)  # разбиение интервала длины

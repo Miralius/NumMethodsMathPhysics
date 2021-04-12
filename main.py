@@ -11,7 +11,7 @@ if __name__ == '__main__':
     x = linspace(0, length, I_)  # разбиение интервала длины
     t = linspace(0, time, K)  # разбиение интервала времени
     #  number = find_number(alpha, c, d, time, length)
-    number = 650
+    number = 1000
     field = analytical_solution(x, t, alpha, c, d, time, length, number)
 
     x_0, = np.where(x >= 0)
@@ -83,7 +83,7 @@ if __name__ == '__main__':
               np.array(["x_a", "x_" + str(len(x1) - 1), "x_" + str(len(x2) - 1), "x_" + str(len(x3) - 1)]), "t, с",
               "Тест сгущающихся сеток для x = " + str(x1[x__1[0]]))
 
-    grid_x = np.array([10, 20, 40, 80, 160, 320, 640, 1280])
-    grid_t = np.array([10, 20, 40, 80, 160, 320, 640, 1280])
+    grid_x = np.array([10, 20, 40, 80, 160, 320, 640, 1280, 2560])
+    grid_t = np.array([10, 20, 40, 80, 160, 320, 640, 1280, 2560])
     print(get_numerical_experiments(
-        grid_t, grid_x, alpha, c, d, time, length, number, 2, 2, crank_nicholson_solve, root_mean_square_norm_error))
+        grid_t, grid_x, alpha, c, d, time, length, number, 2, 2, crank_nicholson_solve, uniform_norm_error))
