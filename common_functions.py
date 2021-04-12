@@ -1,7 +1,6 @@
 import os
 import matplotlib.pyplot as plt  # отрисовка графиков
-import numpy as np
-
+from concurrent import futures
 from crank_nicholson_scheme import *
 
 
@@ -9,6 +8,23 @@ from crank_nicholson_scheme import *
 def linspace(a, b, n):
     h = (b - a) / n
     return np.array([i * h for i in range(n + 1)])
+
+
+def get_analytical_solutions_row(x, t, alpha, c, d, time, length, number):
+    u = np.zeros(len(t))
+    for k in range(len(t)):
+        summa = 0
+        n = 1
+        while n <= number:
+            lambda_n = np.pi * (2 * n - 1) / (2 * length)
+            mu_n = (1 / c) * (alpha * lambda_n ** 2 + d)
+            summa += (2 * np.sin(lambda_n * x) * (2 * (d - c * mu_n) * np.exp(-mu_n * t[k]) + mu_n * (2 * c - d *
+                                                                                                         time) *
+                                                     np.exp(-2 * t[k] / time) + d * (mu_n * time - 2))) / (
+                             length * lambda_n * mu_n * c * (mu_n * time - 2))
+            n += 1
+        u[k] = -summa + 1 - np.exp(-2 * t[k] / time)
+    return u
 
 
 # Аналитическое решение
@@ -19,20 +35,20 @@ def analytical_solution(x, t, alpha, c, d, time, length, number):
         os.mkdir('analytical_solutions')
     if os.path.exists(path + '.npz'):
         return np.load(path + '.npz')['arr_0']
-    solution = np.zeros((len(x), len(t)))
-    for k in range(len(t)):
-        for i in range(len(x)):
-            summa = 0
-            n = 1
-            while n <= number:
-                lambda_n = np.pi * (2 * n - 1) / (2 * length)
-                mu_n = (1 / c) * (alpha * lambda_n ** 2 + d)
-                summa += (2 * np.sin(lambda_n * x[i]) * (2 * (d - c * mu_n) * np.exp(-mu_n * t[k]) + mu_n * (2 * c - d *
-                                                                                                             time) *
-                                                         np.exp(-2 * t[k] / time) + d * (mu_n * time - 2))) / (
-                                     length * lambda_n * mu_n * c * (mu_n * time - 2))
-                n += 1
-            solution[i][k] = -summa + 1 - np.exp(-2 * t[k] / time)
+    solution = np.array([])
+
+    if __name__ == 'common_functions':
+        with futures.ProcessPoolExecutor() as executor:
+            todo = []
+            for m in range(len(x)):
+                future = executor.submit(get_analytical_solutions_row, x[m], t, alpha, c, d, time, length, number)
+                todo.append(future)
+            for future in futures.as_completed(todo):
+                if len(solution) == 0:
+                    solution = future.result()
+                else:
+                    solution = np.vstack((solution, future.result()))
+
     np.savez_compressed(path, solution)
     return solution
 
@@ -43,7 +59,6 @@ def mean_norm_error(field1, field2):
 
 def uniform_norm_error(field1, field2):
     eps = 0
-    test = abs(field1 - field2)
     for j in range(len(field1)):
         if max(abs(field1[j] - field2[j])) > eps:
             eps = max(abs(field1[j] - field2[j]))
