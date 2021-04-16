@@ -67,6 +67,7 @@ def root_mean_square_norm_error(field1, field2):
     return np.sqrt(eps / (len(field1) * len(field1[0])))
 
 
+@numba.njit
 def find_number(alpha, c, d, time, length):
     size = 100
     x = linspace(0, length, size)  # разбиение интервала длины
