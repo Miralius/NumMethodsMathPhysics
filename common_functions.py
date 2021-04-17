@@ -1,5 +1,7 @@
 import os
 import matplotlib.pyplot as plt  # отрисовка графиков
+from explicit_scheme import *
+from implicit_scheme import *
 from crank_nicholson_scheme import *
 from numba import prange
 
@@ -31,8 +33,12 @@ def get_analytical_solutions(x, t, alpha, c, d, time, length, number):
 
 
 # Аналитическое решение
-def analytical_solution(x, t, alpha, c, d, time, length, number):
-    path = 'analytical_solutions/I=' + str(len(x) - 1) + ' K=' + str(len(t) - 1) + ' alpha=' + str(alpha) + ' c=' + str(
+def analytical_solution(x, t, alpha, c, d, number):
+    i = len(x) - 1
+    k = len(t) - 1
+    time = t[k]
+    length = x[i]
+    path = 'analytical_solutions/I=' + str(i) + ' K=' + str(k) + ' alpha=' + str(alpha) + ' c=' + str(
         c) + ' D=' + str(d) + ' T=' + str(time) + ' l=' + str(length) + ' N=' + str(number)
     if not os.path.isdir('analytical_solutions'):
         os.mkdir('analytical_solutions')

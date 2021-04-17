@@ -8,7 +8,7 @@ def gamma(t, time):
 
 
 @numba.njit(cache=True, parallel=True)
-def crank_nicholson_solve(x, t, alpha, c, d):
+def crank_nicholson_solve(x, t, alpha, c, d, number):
     i = len(x) - 1  # Инициализация всех констант и массивов
     k = len(t) - 1
     time = t[k]
