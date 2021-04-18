@@ -30,14 +30,27 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         self.reset_t_button.clicked.connect(self.reset_t_values)
         self.start_button.clicked.connect(self.start)
 
-    def add_x_value(self):
-        if self.x_setted_list.findItems(str("%.2f" % self.x_input.value()), Qt.MatchFlags.MatchExactly):
-            pass
-        elif self.x_input.value() <= self.length_input.value():
-            self.x_setted_list.addItem(str("%.2f" % self.x_input.value()))
+    @staticmethod
+    def add_value(given_list, value, max_value):
+        if value <= max_value:
+            if given_list.findItems(str("%.2f" % value), Qt.MatchFlags.MatchExactly):
+                pass
+            elif given_list.count():
+                for i in range(given_list.count()):
+                    if value < float(given_list.item(i).text()):
+                        given_list.insertItem(i, str("%.2f" % value))
+                        break
+                    elif i == (given_list.count() - 1):
+                        given_list.insertItem(i + 1, str("%.2f" % value))
+            else:
+                given_list.addItem(str("%.2f" % value))
+            return True
         else:
+            return False
+
+    def add_x_value(self):
+        if self.add_value(self.x_setted_list, self.x_input.value(), self.length_input.value()) is False:
             QMessageBox.critical(self, "Ошибка! ", "Выберите x меньше или равным длине трубки")
-        self.x_setted_list.sortItems()
 
     def delete_x_value(self):
         self.x_setted_list.takeItem(self.x_setted_list.currentRow())
@@ -46,13 +59,8 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         self.x_setted_list.clear()
 
     def add_t_value(self):
-        if self.t_setted_list.findItems(str("%.2f" % self.t_input.value()), Qt.MatchFlags.MatchExactly):
-            pass
-        elif self.t_input.value() <= self.time_input.value():
-            self.t_setted_list.addItem(str("%.2f" % self.t_input.value()))
-        else:
+        if self.add_value(self.t_setted_list, self.t_input.value(), self.time_input.value()) is False:
             QMessageBox.critical(self, "Ошибка! ", "Выберите t меньше или равным времени наблюдения")
-        self.t_setted_list.sortItems()
 
     def delete_t_value(self):
         self.t_setted_list.takeItem(self.t_setted_list.currentRow())
@@ -63,6 +71,22 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
     def method_selected(self):
         self.method = self.sender().number
 
+    @staticmethod
+    def get_functions_for_plot(x, field, given_list, label):
+        functions = np.zeros((given_list.count(), len(x)))
+        labels = np.array([])
+        for i in range(given_list.count()):
+            if float(given_list.item(i).text()) <= x[len(x) - 1]:
+                index, = np.where(x >= float(given_list.item(i).text()))
+                functions[i] = field[index[0]]
+                labels = np.append(labels, label + " = " + str(x[index[0]]))
+                if given_list.item(i).text() != str(x[index[0]]):
+                    given_list.takeItem(i)
+                    App.add_value(given_list, x[index[0]], x[len(x) - 1])
+            else:
+                return functions, labels, False
+        return functions, labels, True
+
     def start(self):
         x = linspace(0, self.length_input.value(), self.i_input.value())  # разбиение интервала длины
         t = linspace(0, self.time_input.value(), self.k_input.value())  # разбиение интервала времени
@@ -71,6 +95,17 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         d = self.d_input.value()
         number = self.number_input.value()
         field = self.methods[self.method](x, t, alpha, c, d, number)
+        x_functions, x_labels, x_status = self.get_functions_for_plot(x, field, self.x_setted_list, "x")
+        t_functions, t_labels, t_status = self.get_functions_for_plot(t, field.T, self.t_setted_list, "t")
+        if x_status and t_status:
+            plot(t, x_functions, x_labels, "t, с", "Изменение решения u(x,t) по времени")
+            plot(x, t_functions, t_labels, "x, см", "Изменение решения u(x,t) по координате")
+        elif x_status:
+            QMessageBox.critical(self, "Ошибка! ", "В таблице есть значения t, превышающие время наблюдения, удалите "
+                                                   "данные значения или увеличьте время наблюдения")
+        else:
+            QMessageBox.critical(self, "Ошибка! ", "В таблице есть значения x, превышающие длину трубки, удалите "
+                                                   "данные значения или увеличьте длину трубки")
 
 
 def main():
