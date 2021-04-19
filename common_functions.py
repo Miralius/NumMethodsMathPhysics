@@ -80,8 +80,8 @@ def find_number(alpha, c, d, time, length):
     t = linspace(0, time, size)  # разбиение интервала времени
     number = 1
     while True:
-        field = analytical_solution(x, t, alpha, c, d, time, length, number)
-        field2 = analytical_solution(x, t, alpha, c, d, time, length, number + 1)
+        field = analytical_solution(x, t, alpha, c, d, number)
+        field2 = analytical_solution(x, t, alpha, c, d, number + 1)
         maximum = uniform_norm_error(field, field2)
         print(str(maximum))
         print("n = " + str(number))
@@ -98,13 +98,13 @@ def get_numerical_experiments(i, k, alpha, c, d, time, length, number, hx_rate, 
         results[j][1] = k[j]
         x = linspace(0, length, i[j])
         t = linspace(0, time, k[j])
-        field1 = analytical_solution(x, t, alpha, c, d, time, length, number)
+        field1 = analytical_solution(x, t, alpha, c, d, number)
         field2 = method(x, t, alpha, c, d)
         eps = norm_error(field1, field2)
         results[j][2] = eps
         x = linspace(0, length, hx_rate * i[j])
         t = linspace(0, time, ht_rate * k[j])
-        field1 = analytical_solution(x, t, alpha, c, d, time, length, number)
+        field1 = analytical_solution(x, t, alpha, c, d, number)
         field2 = method(x, t, alpha, c, d)
         eps2 = norm_error(field1, field2)
         results[j][3] = eps2

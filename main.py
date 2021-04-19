@@ -14,10 +14,13 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
+        self.analytical_solution_selector.setChecked(True)
         self.analytical_solution_selector.number = 0
         self.analytical_solution_selector.toggled.connect(self.method_selected)
+        self.explicit_method_selector.setEnabled(False)
         self.explicit_method_selector.number = 1
         self.explicit_method_selector.toggled.connect(self.method_selected)
+        self.implicit_method_selector.setEnabled(False)
         self.implicit_method_selector.number = 2
         self.implicit_method_selector.toggled.connect(self.method_selected)
         self.crank_nicholson_method_selector.number = 3
@@ -73,19 +76,21 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
 
     @staticmethod
     def get_functions_for_plot(x, field, given_list, label):
-        functions = np.zeros((given_list.count(), len(x)))
-        labels = np.array([])
+        x_values = np.array([])
         for i in range(given_list.count()):
             if float(given_list.item(i).text()) <= x[len(x) - 1]:
                 index, = np.where(x >= float(given_list.item(i).text()))
-                functions[i] = field[index[0]]
-                labels = np.append(labels, label + " = " + str(x[index[0]]))
-                if given_list.item(i).text() != str(x[index[0]]):
-                    given_list.takeItem(i)
-                    App.add_value(given_list, x[index[0]], x[len(x) - 1])
-            else:
-                return functions, labels, False
-        return functions, labels, True
+                x_values = np.append(x_values, x[index[0]])
+        x_values = np.unique(x_values)
+        functions = np.zeros((len(x_values), len(x)))
+        labels = np.array([])
+        given_list.clear()
+        for i in range(len(x_values)):
+            App.add_value(given_list, x_values[i], x[len(x) - 1])
+            index, = np.where(x >= x_values[i])
+            functions[i] = field[index[0]]
+            labels = np.append(labels, label + " = " + str("%.2f" % x[index[0]]))
+        return functions, labels
 
     def start(self):
         x = linspace(0, self.length_input.value(), self.i_input.value())  # разбиение интервала длины
@@ -95,17 +100,10 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         d = self.d_input.value()
         number = self.number_input.value()
         field = self.methods[self.method](x, t, alpha, c, d, number)
-        x_functions, x_labels, x_status = self.get_functions_for_plot(x, field, self.x_setted_list, "x")
-        t_functions, t_labels, t_status = self.get_functions_for_plot(t, field.T, self.t_setted_list, "t")
-        if x_status and t_status:
-            plot(t, x_functions, x_labels, "t, с", "Изменение решения u(x,t) по времени")
-            plot(x, t_functions, t_labels, "x, см", "Изменение решения u(x,t) по координате")
-        elif x_status:
-            QMessageBox.critical(self, "Ошибка! ", "В таблице есть значения t, превышающие время наблюдения, удалите "
-                                                   "данные значения или увеличьте время наблюдения")
-        else:
-            QMessageBox.critical(self, "Ошибка! ", "В таблице есть значения x, превышающие длину трубки, удалите "
-                                                   "данные значения или увеличьте длину трубки")
+        x_functions, x_labels = self.get_functions_for_plot(x, field, self.x_setted_list, "x")
+        t_functions, t_labels = self.get_functions_for_plot(t, field.T, self.t_setted_list, "t")
+        plot(t, x_functions, x_labels, "t, с", "Изменение решения u(x,t) по времени")
+        plot(x, t_functions, t_labels, "x, см", "Изменение решения u(x,t) по координате")
 
 
 def main():
