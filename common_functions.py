@@ -120,25 +120,6 @@ def plot(x, functions, names, label, name, axis_values=None):
     xy.grid(which="minor", color='gray', linestyle=':')
     i = 0
     while i < len(functions):
-        xy.plot(x, functions[i], label=names[i])
-        i += 1
-    xy.set_xlabel(label)
-    xy.set_ylabel("u(x,t), г/см³")
-    if axis_values is not None:
-        plt.axis(axis_values)
-    xy.legend()
-    xy.set_title(name, fontsize=9)
-    plt.show()
-
-
-# Отрисовка одномерных графиков
-def plot_test(x, functions, names, label, name, axis_values=None):
-    xy = plt.subplot()
-    xy.grid(which='major', color='k')
-    xy.minorticks_on()
-    xy.grid(which="minor", color='gray', linestyle=':')
-    i = 0
-    while i < len(functions):
         xy.plot(x[i], functions[i], label=names[i])
         i += 1
     xy.set_xlabel(label)
@@ -147,16 +128,4 @@ def plot_test(x, functions, names, label, name, axis_values=None):
         plt.axis(axis_values)
     xy.legend()
     xy.set_title(name, fontsize=9)
-    plt.show()
-
-
-# Отрисовка двумерных графиков
-def plot_2d(field, label):  # field -результат , Label - надпись
-    my_map = plt.get_cmap("plasma")  # цветовая схема
-    plt.set_cmap(my_map)  # применение схемы к фигуре графика
-    plt.figure(figsize=(10, 10))  # создание фигуры с размером 1000*1000 пикселей
-
-    plt.imshow(field)  # наложение на график изобр. ампл. поля
-    plt.title(label, fontsize=9)  # заголовок
-    plt.colorbar()
     plt.show()

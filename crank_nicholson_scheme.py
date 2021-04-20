@@ -7,6 +7,7 @@ def gamma(t, time):
     return 1 - np.exp(-2 * t / time)
 
 
+# noinspection PyUnusedLocal
 @numba.njit(cache=True, parallel=True)
 def crank_nicholson_solve(x, t, alpha, c, d, number):
     i = len(x) - 1  # Инициализация всех констант и массивов

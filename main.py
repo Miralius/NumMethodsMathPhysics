@@ -1,19 +1,22 @@
 import sys  # sys нужен для передачи argv в QApplication
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QTableWidgetItem
 from common_functions import *
 from PyQt6 import QtWidgets
-import first_tab  # Это наш конвертированный файл дизайна
+import gui
 
 
-class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
-    method = 0
+class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
     methods = {0: analytical_solution, 1: explicit_solve, 2: implicit_solve, 3: crank_nicholson_solve}
 
     def __init__(self):
         super().__init__()
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
+        #  Функционал первой вкладки (основной)
+        self.method = 0
+        self.method_2 = 3
+        self.method_3 = 3
         self.analytical_solution_selector.setChecked(True)
         self.analytical_solution_selector.number = 0
         self.analytical_solution_selector.toggled.connect(self.method_selected)
@@ -31,7 +34,30 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         self.add_t_button.clicked.connect(self.add_t_value)
         self.delete_t_button.clicked.connect(self.delete_t_value)
         self.reset_t_button.clicked.connect(self.reset_t_values)
-        self.start_button.clicked.connect(self.start)
+        self.start_button.clicked.connect(self.start_dynamics_calculate)
+        self.stop_button.setEnabled(False)
+        self.stop_button_2.setEnabled(False)
+        self.start_button_2.setEnabled(False)
+        self.stop_button_3.setEnabled(False)
+        #  Функционал второй вкладки (сходимость решений)
+        self.explicit_method_selector_2.setEnabled(False)
+        self.explicit_method_selector_2.number = 1
+        self.explicit_method_selector_2.toggled.connect(self.method_selected)
+        self.implicit_method_selector_2.setEnabled(False)
+        self.implicit_method_selector_2.number = 2
+        self.implicit_method_selector_2.toggled.connect(self.method_selected)
+        self.crank_nicholson_method_selector_2.setChecked(True)
+        self.crank_nicholson_method_selector_2.number = 3
+        self.crank_nicholson_method_selector_2.toggled.connect(self.method_selected)
+        self.tableWidget_by_t.cellChanged.connect(self.add_table_value)
+        self.tableWidget_by_x.cellChanged.connect(self.add_table_value)
+        self.add_x_button_2.clicked.connect(self.add_by_t_value)
+        self.delete_x_button_2.clicked.connect(self.delete_by_t_value)
+        self.reset_x_button_2.clicked.connect(self.reset_table_t_values)
+        self.add_t_button_2.clicked.connect(self.add_by_x_value)
+        self.delete_t_button_2.clicked.connect(self.delete_by_x_value)
+        self.reset_t_button_2.clicked.connect(self.reset_table_x_values)
+        self.start_button_2.clicked.connect(self.start_convergences_calculate)
 
     @staticmethod
     def add_value(given_list, value, max_value):
@@ -72,7 +98,13 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         self.t_setted_list.clear()
 
     def method_selected(self):
-        self.method = self.sender().number
+        name = self.sender().objectName()
+        if name[-1] == "2":
+            self.method_2 = self.sender().number
+        elif name[-1] == "3":
+            self.method_3 = self.sender().number
+        else:
+            self.method = self.sender().number
 
     @staticmethod
     def get_functions_for_plot(x, field, given_list, label):
@@ -82,7 +114,7 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
                 index, = np.where(x >= float(given_list.item(i).text()))
                 x_values = np.append(x_values, x[index[0]])
         x_values = np.unique(x_values)
-        functions = np.zeros((len(x_values), len(x)))
+        functions = np.zeros((len(x_values), len(field[0])))
         labels = np.array([])
         given_list.clear()
         for i in range(len(x_values)):
@@ -92,7 +124,9 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
             labels = np.append(labels, label + " = " + str("%.2f" % x[index[0]]))
         return functions, labels
 
-    def start(self):
+    def start_dynamics_calculate(self):
+        self.waiting_text.setText("Команда выполняется…")
+        self.repaint()
         x = linspace(0, self.length_input.value(), self.i_input.value())  # разбиение интервала длины
         t = linspace(0, self.time_input.value(), self.k_input.value())  # разбиение интервала времени
         alpha = self.alpha_input.value()
@@ -102,8 +136,79 @@ class App(QtWidgets.QMainWindow, first_tab.Ui_MainWindow):
         field = self.methods[self.method](x, t, alpha, c, d, number)
         x_functions, x_labels = self.get_functions_for_plot(x, field, self.x_setted_list, "x")
         t_functions, t_labels = self.get_functions_for_plot(t, field.T, self.t_setted_list, "t")
-        plot(t, x_functions, x_labels, "t, с", "Изменение решения u(x,t) по времени")
-        plot(x, t_functions, t_labels, "x, см", "Изменение решения u(x,t) по координате")
+        t_array = np.array([t for _ in range(len(x_functions))])
+        x_array = np.array([x for _ in range(len(t_functions))])
+        plot(t_array, x_functions, x_labels, "t, с", "Изменение решения u(x,t) по времени")
+        plot(x_array, t_functions, t_labels, "x, см", "Изменение решения u(x,t) по координате")
+        self.waiting_text.setText("Ожидание команды…")
+
+    def add_table_value(self):
+        if not self.sender().item(self.sender().currentRow(), self.sender().currentColumn()).text().isdigit():
+            self.sender().blockSignals(True)
+            self.sender().setItem(self.sender().currentRow(), self.sender().currentColumn(), QTableWidgetItem(str(100)))
+            self.sender().blockSignals(False)
+
+    def add_by_t_value(self):
+        self.tableWidget_by_t.insertRow(self.tableWidget_by_t.rowCount())
+
+    def reset_table_t_values(self):
+        self.tableWidget_by_t.clearContents()
+        self.tableWidget_by_t.setRowCount(0)
+
+    def delete_by_t_value(self):
+        self.tableWidget_by_t.removeRow(self.tableWidget_by_t.currentRow())
+
+    def add_by_x_value(self):
+        self.tableWidget_by_x.insertRow(self.tableWidget_by_x.rowCount())
+
+    def reset_table_x_values(self):
+        self.tableWidget_by_x.clearContents()
+        self.tableWidget_by_x.setRowCount(0)
+
+    def delete_by_x_value(self):
+        self.tableWidget_by_x.removeRow(self.tableWidget_by_x.currentRow())
+
+    def start_convergences_calculate(self):
+        self.waiting_text_2.setText("Команда выполняется…")
+        self.repaint()
+        alpha = self.alpha_input.value()
+        c = self.c_input.value()
+        d = self.d_input.value()
+        number = self.number_input_2.value()
+        x_input = self.x_input_2.value()
+        t_input = self.t_input_2.value()
+        x = linspace(0, self.length_input.value(), self.i_input_2.value())  # разбиение интервала длины
+        t = linspace(0, self.time_input.value(), self.k_input_2.value())  # разбиение интервала времени
+        field = analytical_solution(x, t, alpha, c, d, number)
+        index, = np.where(x >= x_input)
+        x_array = np.array([t], dtype=object)
+        x_functions = np.array([field[index[0]]], dtype=object)
+        x_labels = "Аналит. решение"
+        index, = np.where(t >= t_input)
+        t_array = np.array([x], dtype=object)
+        t_functions = np.array([field.T[index[0]]], dtype=object)
+        t_labels = "Аналит. решение"
+        for i in range(self.tableWidget_by_t.rowCount()):
+            x = linspace(0, self.length_input.value(), int(self.tableWidget_by_t.item(i, 0).text()))
+            t = linspace(0, self.time_input.value(), int(self.tableWidget_by_t.item(i, 1).text()))
+            field = self.methods[self.method](x, t, alpha, c, d, number)
+            index, = np.where(x >= x_input)
+            x_array = np.vstack((x_array, t))
+            x_functions = np.vstack((x_functions, field[index[0]]))
+            x_labels = np.append(x_labels, "I=" + self.tableWidget_by_t.item(i, 0).text() + " K=" +
+                                 self.tableWidget_by_t.item(i, 1).text())
+        for i in range(self.tableWidget_by_x.rowCount()):
+            x = linspace(0, self.length_input.value(), int(self.tableWidget_by_x.item(i, 0).text()))
+            t = linspace(0, self.time_input.value(), int(self.tableWidget_by_x.item(i, 1).text()))
+            field = self.methods[self.method](x, t, alpha, c, d, number)
+            index, = np.where(t >= t_input)
+            t_array = np.vstack((t_array, x))
+            t_functions = np.vstack((t_functions, field.T[index[0]]))
+            t_labels = np.append(t_labels, "I=" + self.tableWidget_by_x.item(i, 0).text() + " K=" +
+                                 self.tableWidget_by_x.item(i, 1).text())
+        plot(t_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = ", str(x_input))
+        plot(x_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = ", str(t_input))
+        self.waiting_text_2.setText("Ожидание команды…")
 
 
 def main():
