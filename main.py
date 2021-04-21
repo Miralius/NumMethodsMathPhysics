@@ -7,6 +7,7 @@ from PyQt6 import QtWidgets
 import gui
 
 
+# noinspection DuplicatedCode
 class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
     methods = {0: analytical_solution, 1: explicit_solve, 2: implicit_solve, 3: crank_nicholson_solve}
 
@@ -210,6 +211,8 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         t_functions[0] = field.T[index[0]]
         t_labels = "Аналит. решение"
         for i in range(self.tableWidget_by_t.rowCount()):
+            if not self.tableWidget_by_t.item(i, 0) or not self.tableWidget_by_t.item(0, 1):
+                break
             x = linspace(0, self.length_input.value(), int(self.tableWidget_by_t.item(i, 0).text()))
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_t.item(i, 1).text()))
             field = self.methods[self.method_2](x, t, alpha, c, d, number)
@@ -219,6 +222,8 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             x_labels = np.append(x_labels, "I=" + self.tableWidget_by_t.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_t.item(i, 1).text())
         for i in range(self.tableWidget_by_x.rowCount()):
+            if not self.tableWidget_by_x.item(i, 0) or not self.tableWidget_by_x.item(0, 1):
+                break
             x = linspace(0, self.length_input.value(), int(self.tableWidget_by_x.item(i, 0).text()))
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_x.item(i, 1).text()))
             field = self.methods[self.method_2](x, t, alpha, c, d, number)
