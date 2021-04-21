@@ -1,9 +1,9 @@
 import os
+
 import matplotlib.pyplot as plt  # отрисовка графиков
-from explicit_scheme import *
-from implicit_scheme import *
-from crank_nicholson_scheme import *
 from numba import prange
+
+from crank_nicholson_scheme import *
 
 
 # noinspection SpellCheckingInspection

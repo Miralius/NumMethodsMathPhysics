@@ -8,6 +8,11 @@ import gui
 
 
 # noinspection DuplicatedCode
+from explicit_scheme import explicit_solve
+from implicit_scheme import implicit_solve
+
+
+# noinspection DuplicatedCode
 class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
     methods = {0: analytical_solution, 1: explicit_solve, 2: implicit_solve, 3: crank_nicholson_solve}
 
@@ -262,7 +267,7 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         length = self.length_input.value()
         number = self.number_input_2.value()
         if 1 <= self.method_3 <= 2:
-            hx_rate, ht_rate = 4, 2
+            hx_rate, ht_rate = 2, 4
         else:
             hx_rate, ht_rate = 2, 2
         norm_error = uniform_norm_error
