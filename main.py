@@ -37,7 +37,6 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.start_button.clicked.connect(self.start_dynamics_calculate)
         self.stop_button.setEnabled(False)
         self.stop_button_2.setEnabled(False)
-        self.start_button_2.setEnabled(False)
         self.stop_button_3.setEnabled(False)
         #  Функционал второй вкладки (сходимость решений)
         self.explicit_method_selector_2.setEnabled(False)
@@ -143,7 +142,8 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.waiting_text.setText("Ожидание команды…")
 
     def add_table_value(self):
-        if not self.sender().item(self.sender().currentRow(), self.sender().currentColumn()).text().isdigit():
+        item = self.sender().item(self.sender().currentRow(), self.sender().currentColumn()).text()
+        if not item.isdigit() or int(item) == 0:
             self.sender().blockSignals(True)
             self.sender().setItem(self.sender().currentRow(), self.sender().currentColumn(), QTableWidgetItem(str(100)))
             self.sender().blockSignals(False)
@@ -181,33 +181,37 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         t = linspace(0, self.time_input.value(), self.k_input_2.value())  # разбиение интервала времени
         field = analytical_solution(x, t, alpha, c, d, number)
         index, = np.where(x >= x_input)
-        x_array = np.array([t], dtype=object)
-        x_functions = np.array([field[index[0]]], dtype=object)
+        x_array = np.empty((self.tableWidget_by_t.rowCount() + 1), dtype=object)
+        x_array[0] = t
+        x_functions = np.empty((self.tableWidget_by_t.rowCount() + 1), dtype=object)
+        x_functions[0] = field[index[0]]
         x_labels = "Аналит. решение"
         index, = np.where(t >= t_input)
-        t_array = np.array([x], dtype=object)
-        t_functions = np.array([field.T[index[0]]], dtype=object)
+        t_array = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
+        t_array[0] = x
+        t_functions = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
+        t_functions[0] = field.T[index[0]]
         t_labels = "Аналит. решение"
         for i in range(self.tableWidget_by_t.rowCount()):
             x = linspace(0, self.length_input.value(), int(self.tableWidget_by_t.item(i, 0).text()))
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_t.item(i, 1).text()))
-            field = self.methods[self.method](x, t, alpha, c, d, number)
+            field = self.methods[self.method_2](x, t, alpha, c, d, number)
             index, = np.where(x >= x_input)
-            x_array = np.vstack((x_array, t))
-            x_functions = np.vstack((x_functions, field[index[0]]))
+            x_array[i + 1] = t
+            x_functions[i + 1] = field[index[0]]
             x_labels = np.append(x_labels, "I=" + self.tableWidget_by_t.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_t.item(i, 1).text())
         for i in range(self.tableWidget_by_x.rowCount()):
             x = linspace(0, self.length_input.value(), int(self.tableWidget_by_x.item(i, 0).text()))
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_x.item(i, 1).text()))
-            field = self.methods[self.method](x, t, alpha, c, d, number)
+            field = self.methods[self.method_2](x, t, alpha, c, d, number)
             index, = np.where(t >= t_input)
-            t_array = np.vstack((t_array, x))
-            t_functions = np.vstack((t_functions, field.T[index[0]]))
+            t_array[i + 1] = x
+            t_functions[i + 1] = field.T[index[0]]
             t_labels = np.append(t_labels, "I=" + self.tableWidget_by_x.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_x.item(i, 1).text())
-        plot(t_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = ", str(x_input))
-        plot(x_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = ", str(t_input))
+        plot(x_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = " + str(x_input))
+        plot(t_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = " + str(t_input))
         self.waiting_text_2.setText("Ожидание команды…")
 
 
