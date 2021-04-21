@@ -210,8 +210,11 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         t_functions = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
         t_functions[0] = field.T[index[0]]
         t_labels = "Аналит. решение"
+        status_ok = True
         for i in range(self.tableWidget_by_t.rowCount()):
-            if not self.tableWidget_by_t.item(i, 0) or not self.tableWidget_by_t.item(0, 1):
+            if not self.tableWidget_by_t.item(i, 0) or not self.tableWidget_by_t.item(i, 1):
+                QMessageBox.critical(self, "Ошибка! ", "Наличие пустых/полупустых строк в таблицах недопустимо!")
+                status_ok = False
                 break
             x = linspace(0, self.length_input.value(), int(self.tableWidget_by_t.item(i, 0).text()))
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_t.item(i, 1).text()))
@@ -222,7 +225,9 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             x_labels = np.append(x_labels, "I=" + self.tableWidget_by_t.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_t.item(i, 1).text())
         for i in range(self.tableWidget_by_x.rowCount()):
-            if not self.tableWidget_by_x.item(i, 0) or not self.tableWidget_by_x.item(0, 1):
+            if not self.tableWidget_by_x.item(i, 0) or not self.tableWidget_by_x.item(i, 1):
+                QMessageBox.critical(self, "Ошибка! ", "Наличие пустых/полупустых строк в таблицах недопустимо!")
+                status_ok = False
                 break
             x = linspace(0, self.length_input.value(), int(self.tableWidget_by_x.item(i, 0).text()))
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_x.item(i, 1).text()))
@@ -232,8 +237,9 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             t_functions[i + 1] = field.T[index[0]]
             t_labels = np.append(t_labels, "I=" + self.tableWidget_by_x.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_x.item(i, 1).text())
-        plot(x_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = " + str(x_input))
-        plot(t_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = " + str(t_input))
+        if status_ok:
+            plot(x_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = " + str(x_input))
+            plot(t_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = " + str(t_input))
         self.waiting_text_2.setText("Ожидание команды…")
 
     def add_table_error_row(self):
@@ -262,6 +268,7 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         norm_error = uniform_norm_error
         for j in range(self.tableWidget_error_rates.rowCount()):
             if not self.tableWidget_error_rates.item(j, 0) or not self.tableWidget_error_rates.item(j, 1):
+                QMessageBox.critical(self, "Ошибка! ", "Наличие пустых/полупустых строк в таблицах недопустимо!")
                 break
             i = int(self.tableWidget_error_rates.item(j, 0).text())
             k = int(self.tableWidget_error_rates.item(j, 1).text())
