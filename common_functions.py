@@ -92,23 +92,22 @@ def find_number(alpha, c, d, time, length):
 
 
 def get_numerical_experiments(i, k, alpha, c, d, time, length, number, hx_rate, ht_rate, method, norm_error):
-    results = np.zeros((len(i), 5), dtype=float)
-    for j in range(len(i)):
-        results[j][0] = i[j]
-        results[j][1] = k[j]
-        x = linspace(0, length, i[j])
-        t = linspace(0, time, k[j])
-        field1 = analytical_solution(x, t, alpha, c, d, number)
-        field2 = method(x, t, alpha, c, d)
-        eps = norm_error(field1, field2)
-        results[j][2] = eps
-        x = linspace(0, length, hx_rate * i[j])
-        t = linspace(0, time, ht_rate * k[j])
-        field1 = analytical_solution(x, t, alpha, c, d, number)
-        field2 = method(x, t, alpha, c, d)
-        eps2 = norm_error(field1, field2)
-        results[j][3] = eps2
-        results[j][4] = eps / eps2
+    results = np.zeros(5, dtype=float)
+    results[0] = i
+    results[1] = k
+    x = linspace(0, length, i)
+    t = linspace(0, time, k)
+    field1 = analytical_solution(x, t, alpha, c, d, number)
+    field2 = method(x, t, alpha, c, d, number)
+    eps = norm_error(field1, field2)
+    results[2] = eps
+    x = linspace(0, length, hx_rate * i)
+    t = linspace(0, time, ht_rate * k)
+    field1 = analytical_solution(x, t, alpha, c, d, number)
+    field2 = method(x, t, alpha, c, d, number)
+    eps2 = norm_error(field1, field2)
+    results[3] = eps2
+    results[4] = eps / eps2
     return results
 
 

@@ -15,15 +15,13 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
         #  Функционал первой вкладки (основной)
         self.method = 0
-        self.method_2 = 3
-        self.method_3 = 3
+        self.method_2 = 1
+        self.method_3 = 1
         self.analytical_solution_selector.setChecked(True)
         self.analytical_solution_selector.number = 0
         self.analytical_solution_selector.toggled.connect(self.method_selected)
-        self.explicit_method_selector.setEnabled(False)
         self.explicit_method_selector.number = 1
         self.explicit_method_selector.toggled.connect(self.method_selected)
-        self.implicit_method_selector.setEnabled(False)
         self.implicit_method_selector.number = 2
         self.implicit_method_selector.toggled.connect(self.method_selected)
         self.crank_nicholson_method_selector.number = 3
@@ -35,21 +33,17 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.delete_t_button.clicked.connect(self.delete_t_value)
         self.reset_t_button.clicked.connect(self.reset_t_values)
         self.start_button.clicked.connect(self.start_dynamics_calculate)
-        self.stop_button.setEnabled(False)
-        self.stop_button_2.setEnabled(False)
-        self.stop_button_3.setEnabled(False)
         #  Функционал второй вкладки (сходимость решений)
-        self.explicit_method_selector_2.setEnabled(False)
+        self.explicit_method_selector_2.setChecked(True)
         self.explicit_method_selector_2.number = 1
         self.explicit_method_selector_2.toggled.connect(self.method_selected)
-        self.implicit_method_selector_2.setEnabled(False)
         self.implicit_method_selector_2.number = 2
         self.implicit_method_selector_2.toggled.connect(self.method_selected)
-        self.crank_nicholson_method_selector_2.setChecked(True)
         self.crank_nicholson_method_selector_2.number = 3
         self.crank_nicholson_method_selector_2.toggled.connect(self.method_selected)
         self.tableWidget_by_t.cellChanged.connect(self.add_table_value)
         self.tableWidget_by_x.cellChanged.connect(self.add_table_value)
+        self.tableWidget_error_rates.cellChanged.connect(self.add_table_value)
         self.add_x_button_2.clicked.connect(self.add_by_t_value)
         self.delete_x_button_2.clicked.connect(self.delete_by_t_value)
         self.reset_x_button_2.clicked.connect(self.reset_table_t_values)
@@ -57,6 +51,18 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.delete_t_button_2.clicked.connect(self.delete_by_x_value)
         self.reset_t_button_2.clicked.connect(self.reset_table_x_values)
         self.start_button_2.clicked.connect(self.start_convergences_calculate)
+        #  Функционал третьей вкладки
+        self.explicit_method_selector_3.setChecked(True)
+        self.explicit_method_selector_3.number = 1
+        self.explicit_method_selector_3.toggled.connect(self.method_selected)
+        self.implicit_method_selector_3.number = 2
+        self.implicit_method_selector_3.toggled.connect(self.method_selected)
+        self.crank_nicholson_method_selector_3.number = 3
+        self.crank_nicholson_method_selector_3.toggled.connect(self.method_selected)
+        self.add_button.clicked.connect(self.add_table_error_row)
+        self.delete_button_3.clicked.connect(self.delete_table_error_row)
+        self.reset_button_3.clicked.connect(self.reset_table_error)
+        self.start_button_3.clicked.connect(self.start_errors_calculate)
 
     @staticmethod
     def add_value(given_list, value, max_value):
@@ -102,6 +108,11 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             self.method_2 = self.sender().number
         elif name[-1] == "3":
             self.method_3 = self.sender().number
+            if 1 <= self.method_3 <= 2:
+                text = "ε(ht/4, hx/2)"
+            else:
+                text = "ε(ht/2, hx/2)"
+            self.tableWidget_error_rates.horizontalHeaderItem(3).setText(text)
         else:
             self.method = self.sender().number
 
@@ -143,9 +154,15 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
 
     def add_table_value(self):
         item = self.sender().item(self.sender().currentRow(), self.sender().currentColumn()).text()
-        if not item.isdigit() or int(item) == 0:
+        if 0 <= self.sender().currentColumn() <= 1:
+            if not item.isdigit() or int(item) == 0:
+                self.sender().blockSignals(True)
+                self.sender().setItem(self.sender().currentRow(), self.sender().currentColumn(),
+                                      QTableWidgetItem(str(100)))
+                self.sender().blockSignals(False)
+        else:
             self.sender().blockSignals(True)
-            self.sender().setItem(self.sender().currentRow(), self.sender().currentColumn(), QTableWidgetItem(str(100)))
+            self.sender().setItem(self.sender().currentRow(), self.sender().currentColumn(), QTableWidgetItem(""))
             self.sender().blockSignals(False)
 
     def add_by_t_value(self):
@@ -213,6 +230,45 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         plot(x_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = " + str(x_input))
         plot(t_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = " + str(t_input))
         self.waiting_text_2.setText("Ожидание команды…")
+
+    def add_table_error_row(self):
+        self.tableWidget_error_rates.insertRow(self.tableWidget_error_rates.rowCount())
+
+    def reset_table_error(self):
+        self.tableWidget_error_rates.clearContents()
+        self.tableWidget_error_rates.setRowCount(0)
+
+    def delete_table_error_row(self):
+        self.tableWidget_error_rates.removeRow(self.tableWidget_error_rates.currentRow())
+
+    def start_errors_calculate(self):
+        self.waiting_text_3.setText("Команда выполняется…")
+        self.repaint()
+        alpha = self.alpha_input.value()
+        c = self.c_input.value()
+        d = self.d_input.value()
+        time = self.time_input.value()
+        length = self.length_input.value()
+        number = self.number_input_2.value()
+        if 1 <= self.method_3 <= 2:
+            hx_rate, ht_rate = 4, 2
+        else:
+            hx_rate, ht_rate = 2, 2
+        norm_error = uniform_norm_error
+        for j in range(self.tableWidget_error_rates.rowCount()):
+            if not self.tableWidget_error_rates.item(j, 0) or not self.tableWidget_error_rates.item(j, 1):
+                break
+            i = int(self.tableWidget_error_rates.item(j, 0).text())
+            k = int(self.tableWidget_error_rates.item(j, 1).text())
+            results = get_numerical_experiments(
+                i, k, alpha, c, d, time, length, number, hx_rate, ht_rate, self.methods[self.method_3], norm_error)
+            self.tableWidget_error_rates.setItem(j, 0, QTableWidgetItem(str(int(results[0]))))
+            self.tableWidget_error_rates.setItem(j, 1, QTableWidgetItem(str(int(results[1]))))
+            self.tableWidget_error_rates.setItem(j, 2, QTableWidgetItem(str("%.6f" % results[2])))
+            self.tableWidget_error_rates.setItem(j, 3, QTableWidgetItem(str("%.6f" % results[3])))
+            self.tableWidget_error_rates.setItem(j, 4, QTableWidgetItem(str("%.6f" % results[4])))
+            self.repaint()
+        self.waiting_text_3.setText("Ожидание команды…")
 
 
 def main():
