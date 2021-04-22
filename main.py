@@ -1,16 +1,15 @@
 import sys  # sys нужен для передачи argv в QApplication
 
+from PyQt6 import sip
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QTableWidgetItem
 from common_functions import *
 from PyQt6 import QtWidgets
 import gui
 
-
 # noinspection DuplicatedCode
 from explicit_scheme import explicit_solve
 from implicit_scheme import implicit_solve
-
 
 # noinspection DuplicatedCode
 class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
@@ -156,7 +155,7 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         x_array = np.array([x for _ in range(len(t_functions))])
         plot(t_array, x_functions, x_labels, "t, с", "Изменение решения u(x,t) по времени")
         plot(x_array, t_functions, t_labels, "x, см", "Изменение решения u(x,t) по координате")
-        self.waiting_text.setText("Ожидание команды…")
+        self.waiting_text.setText("Нажмите «Старт» для начала работы.")
 
     def add_table_value(self):
         item = self.sender().item(self.sender().currentRow(), self.sender().currentColumn()).text()
@@ -208,13 +207,13 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         x_array[0] = t
         x_functions = np.empty((self.tableWidget_by_t.rowCount() + 1), dtype=object)
         x_functions[0] = field[index[0]]
-        x_labels = "Аналит. решение"
+        x_labels = "Аналитическое решение"
         index, = np.where(t >= t_input)
         t_array = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
         t_array[0] = x
         t_functions = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
         t_functions[0] = field.T[index[0]]
-        t_labels = "Аналит. решение"
+        t_labels = "Аналитическое решение"
         status_ok = True
         for i in range(self.tableWidget_by_t.rowCount()):
             if not self.tableWidget_by_t.item(i, 0) or not self.tableWidget_by_t.item(i, 1):
@@ -243,9 +242,11 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             t_labels = np.append(t_labels, "I=" + self.tableWidget_by_x.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_x.item(i, 1).text())
         if status_ok:
+            x_labels = np.append(x_labels, " ")
+            t_labels = np.append(t_labels, " ")
             plot(x_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = " + str(x_input))
             plot(t_array, t_functions, t_labels, "x, см", "Сходимость решения u(x, t) к точному, t = " + str(t_input))
-        self.waiting_text_2.setText("Ожидание команды…")
+        self.waiting_text_2.setText("Нажмите «Старт» для начала работы.")
 
     def add_table_error_row(self):
         self.tableWidget_error_rates.insertRow(self.tableWidget_error_rates.rowCount())
@@ -285,7 +286,7 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             self.tableWidget_error_rates.setItem(j, 3, QTableWidgetItem(str("%.6e" % results[3])))
             self.tableWidget_error_rates.setItem(j, 4, QTableWidgetItem(str("%.6f" % results[4])))
             self.repaint()
-        self.waiting_text_3.setText("Ожидание команды…")
+        self.waiting_text_3.setText("Нажмите «Старт» для начала работы.")
 
 
 def main():
