@@ -1,5 +1,6 @@
 import sys  # sys нужен для передачи argv в QApplication
 
+# noinspection PyUnresolvedReferences
 from PyQt6 import sip
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QTableWidgetItem
@@ -10,6 +11,7 @@ import gui
 # noinspection DuplicatedCode
 from explicit_scheme import explicit_solve
 from implicit_scheme import implicit_solve
+
 
 # noinspection DuplicatedCode
 class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
