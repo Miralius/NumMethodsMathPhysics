@@ -201,21 +201,12 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         number = self.number_input_2.value()
         x_input = self.x_input_2.value()
         t_input = self.t_input_2.value()
-        x = linspace(0, self.length_input.value(), self.i_input_2.value())  # разбиение интервала длины
-        t = linspace(0, self.time_input.value(), self.k_input_2.value())  # разбиение интервала времени
-        field = analytical_solution(x, t, alpha, c, d, number)
-        index, = np.where(x >= x_input)
         x_array = np.empty((self.tableWidget_by_t.rowCount() + 1), dtype=object)
-        x_array[0] = t
         x_functions = np.empty((self.tableWidget_by_t.rowCount() + 1), dtype=object)
-        x_functions[0] = field[index[0]]
-        x_labels = "Аналитическое решение"
-        index, = np.where(t >= t_input)
+        x_labels = np.array([])
+        t_labels = np.array([])
         t_array = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
-        t_array[0] = x
         t_functions = np.empty((self.tableWidget_by_x.rowCount() + 1), dtype=object)
-        t_functions[0] = field.T[index[0]]
-        t_labels = "Аналитическое решение"
         status_ok = True
         for i in range(self.tableWidget_by_t.rowCount()):
             if not self.tableWidget_by_t.item(i, 0) or not self.tableWidget_by_t.item(i, 1):
@@ -226,8 +217,8 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_t.item(i, 1).text()))
             field = self.methods[self.method_2](x, t, alpha, c, d, number)
             index, = np.where(x >= x_input)
-            x_array[i + 1] = t
-            x_functions[i + 1] = field[index[0]]
+            x_array[i] = t
+            x_functions[i] = field[index[0]]
             x_labels = np.append(x_labels, "I=" + self.tableWidget_by_t.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_t.item(i, 1).text())
         for i in range(self.tableWidget_by_x.rowCount()):
@@ -239,11 +230,22 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             t = linspace(0, self.time_input.value(), int(self.tableWidget_by_x.item(i, 1).text()))
             field = self.methods[self.method_2](x, t, alpha, c, d, number)
             index, = np.where(t >= t_input)
-            t_array[i + 1] = x
-            t_functions[i + 1] = field.T[index[0]]
+            t_array[i] = x
+            t_functions[i] = field.T[index[0]]
             t_labels = np.append(t_labels, "I=" + self.tableWidget_by_x.item(i, 0).text() + " K=" +
                                  self.tableWidget_by_x.item(i, 1).text())
         if status_ok:
+            x = linspace(0, self.length_input.value(), self.i_input_2.value())  # разбиение интервала длины
+            t = linspace(0, self.time_input.value(), self.k_input_2.value())  # разбиение интервала времени
+            field = analytical_solution(x, t, alpha, c, d, number)
+            index, = np.where(x >= x_input)
+            x_array[-1] = t
+            x_functions[-1] = field[index[0]]
+            x_labels = np.append(x_labels, "Аналитическое решение")
+            index, = np.where(t >= t_input)
+            t_array[-1] = x
+            t_functions[-1] = field.T[index[0]]
+            t_labels = np.append(t_labels, "Аналитическое решение")
             x_labels = np.append(x_labels, " ")
             t_labels = np.append(t_labels, " ")
             plot(x_array, x_functions, x_labels, "t, с", "Сходимость решения u(x,t) к точному, x = " + str(x_input))
