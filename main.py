@@ -15,6 +15,10 @@ from implicit_scheme import implicit_solve
 
 # noinspection DuplicatedCode
 class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
+    '''
+        Класс, инициализирующий интерфейс программы.
+        Связывает все слоты ниже с соответствующими сигналами.
+    '''
     methods = {0: analytical_solution, 1: explicit_solve, 2: implicit_solve, 3: crank_nicholson_solve}
 
     def __init__(self):
