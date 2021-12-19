@@ -173,6 +173,7 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         '''
             Записывает номер выбранной схемы/решения на определенной вкладке 
             в соответствующую переменную.
+            
             - Извлекается название радиокнопок.
             - Если название название радиокнопок оканчивается на "2" (вторая вкладка), то
               - В method_2 записывается номер, соответствующий выбранной схеме
@@ -198,6 +199,10 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
 
     @staticmethod
     def get_functions_for_plot(x, field, given_list, label):
+        '''
+            Формирует массивы осей и графиков.
+            
+        '''
         x_values = np.array([])
         for i in range(given_list.count()):
             if float(given_list.item(i).text()) <= x[len(x) - 1]:
