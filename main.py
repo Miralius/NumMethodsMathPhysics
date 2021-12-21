@@ -200,8 +200,12 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
     @staticmethod
     def get_functions_for_plot(x, field, given_list, label):
         '''
-            Формирует массивы осей и графиков.
-            
+            Формирует массивы и графиков и меток.
+            Подменяет все значения в таблицах x и t на значения, входящие в сетку по x и t.
+            Значения заменяются минимальным значением, превышающим то, что входит в таблицу (первый цикл).
+            Если вдруг после такой замены получится несколько одинаковых значений — сохраняется только одно.
+            Уникальные значения, которые после первого цикла теперь являются элементами сетки, кладутся
+            обратно в список (второй цикл). Заодно и формируется массив меток (labels).
         '''
         x_values = np.array([])
         for i in range(given_list.count()):
@@ -220,6 +224,12 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         return functions, labels
 
     def start_dynamics_calculate(self):
+        '''
+            Рассчитывает решения/схемы и рисует графики на первой вкладке (динамика решения).
+            Извлекаются все нужные значения и кладутся во временные переменные внутри метода.
+            С помощью methods[self.method]() (где self.method выбирается методом method_selected())
+            вычисляются выбранные решения/схемы. Затем с помощью get_functions_for_plot() рисуются графики.
+        '''
         self.waiting_text.setText("Команда выполняется…")
         self.repaint()
         x = linspace(0, self.length_input.value(), self.i_input.value())  # разбиение интервала длины
@@ -238,6 +248,12 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.waiting_text.setText("Нажмите «Старт» для начала работы.")
 
     def add_table_value(self):
+        '''
+            Внесение значений в таблицы во 2-ой или 3-ей вкладке.
+            в item записывается внесенное значение и проверяется на адекватность (не должно быть текстом и
+            не должно быть нулём или отрицательным числом). В противном случае значение заменяется на 100.
+            Попытки подогнать значения погрешностей на 3-ей вкладке пресекаются — значения полей уничтожаются.
+        '''
         item = self.sender().item(self.sender().currentRow(), self.sender().currentColumn()).text()
         if 0 <= self.sender().currentColumn() <= 1:
             if not item.isdigit() or int(item) == 0:
@@ -251,26 +267,52 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             self.sender().blockSignals(False)
 
     def add_by_t_value(self):
+        '''
+            Вставка пустой строки в таблицу графиков по времени.
+        '''
         self.tableWidget_by_t.insertRow(self.tableWidget_by_t.rowCount())
 
     def reset_table_t_values(self):
+        '''
+            Очищает всю таблицу графиков по времени и удаляет все строки.
+        '''
         self.tableWidget_by_t.clearContents()
         self.tableWidget_by_t.setRowCount(0)
 
     def delete_by_t_value(self):
+        '''
+            Удаление выбранной строки в таблице графиков по времени.
+        '''
         self.tableWidget_by_t.removeRow(self.tableWidget_by_t.currentRow())
 
     def add_by_x_value(self):
+        '''
+            Вставка пустой строки в таблицу графиков по длине.
+        '''
         self.tableWidget_by_x.insertRow(self.tableWidget_by_x.rowCount())
 
     def reset_table_x_values(self):
+        '''
+            Очищает всю таблицу графиков по длине и удаляет все строки.
+        '''
         self.tableWidget_by_x.clearContents()
         self.tableWidget_by_x.setRowCount(0)
 
     def delete_by_x_value(self):
+        '''
+            Удаление выбранной строки в таблице графиков по длине.
+        '''
         self.tableWidget_by_x.removeRow(self.tableWidget_by_x.currentRow())
 
     def start_convergences_calculate(self):
+        '''
+            Стартует расчёты и отрисовку графиков сходимости решений.
+            status_ok используется для прерывания расчётов в случае ошибочных вводных данных в таблицах.
+            Если есть пустые поля в таблицах, то расчёты прерываются.
+            Как и на первой вкладке, используются ближайшие сверху x и t, входящие в сетку.
+            Если status_ok, то подконец рассчитывается аналитическое решение и добавляется последним в массив решений.
+            В конце отрисовываются графики.
+        '''
         self.waiting_text_2.setText("Команда выполняется…")
         self.repaint()
         alpha = self.alpha_input.value()
@@ -331,16 +373,33 @@ class App(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.waiting_text_2.setText("Нажмите «Старт» для начала работы.")
 
     def add_table_error_row(self):
+        '''
+            Вставка пустой строки в таблице погрешностей.
+        '''
         self.tableWidget_error_rates.insertRow(self.tableWidget_error_rates.rowCount())
 
     def reset_table_error(self):
+        '''
+            Сброс всей таблицы погрешностей.
+        '''
         self.tableWidget_error_rates.clearContents()
         self.tableWidget_error_rates.setRowCount(0)
 
     def delete_table_error_row(self):
+        '''
+            Удаление выбранной строки из таблицы погрешностей.
+        '''
         self.tableWidget_error_rates.removeRow(self.tableWidget_error_rates.currentRow())
 
     def start_errors_calculate(self):
+        '''
+            Расчёт погрешностей (3-я вкладка).
+            В зависимости от выбранной схемы выставляются коэффициенты hx_rate и ht_rate.
+            В курсовой работе используется равномерная норма.
+            Далее в цикле заполняются все строчки с заполненными значениями I и K.
+            Вызывается get_numerical_experiments() где выполняются все расчёты. Этот метод возвращает вектор,
+            значения которого вбиваются в табличку. После чего таблица перерисовывается.
+        '''
         self.waiting_text_3.setText("Команда выполняется…")
         self.repaint()
         alpha = self.alpha_input.value()
